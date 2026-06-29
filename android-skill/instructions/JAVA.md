@@ -2,52 +2,65 @@
 
 ## D8 Compiler Bug — CRITICAL
 
-This environment's D8 version (`R8 3.3.20-dev`) has a known crash on
-anonymous inner classes. It produces a NullPointerException:
-
+This environment's D8 (`R8 3.3.20-dev`) crashes with NPE on **any**
+anonymous inner class or non-static named inner class:
 ```
-java.lang.NullPointerException: Cannot invoke "String.length()"
-because "<parameter1>" is null
+java.lang.NullPointerException: Cannot invoke "String.length()" because "<parameter1>" is null
 ```
 
-### Rule: Extract ALL anonymous classes to named top-level classes.
+**Every working project in this repo has zero anonymous inner classes.**
 
-**BAD** — crashes d8:
+### Rule: Extract ALL anonymous classes to named top-level files
+
+Lambdas (`() -> expr`) and method references (`this::method`) are safe.
+Everything else must be a named top-level class.
+
+**BAD — crashes d8:**
 ```java
-view.setOnClickListener(new View.OnClickListener() {
-    @Override
-    public void onClick(View v) {
-        doSomething();
-    }
+// Anonymous class: CRASH
+webView.setWebViewClient(new WebViewClient() {
+    @Override public void onPageFinished(WebView view, String url) { ... }
 });
 
-ActionMode.Callback callback = new ActionMode.Callback() {
-    // ...
-};
-```
-
-**GOOD** — compiles successfully:
-```java
-// Named top-level class
-public class MyClickListener implements View.OnClickListener {
-    private final Context context;
-    public MyClickListener(Context context) { this.context = context; }
-    @Override
-    public void onClick(View v) {
-        doSomething();
-    }
+// Non-static inner class: also CRASH
+public class MainActivity extends Activity {
+    class Listener implements View.OnClickListener { ... }
 }
 
-// Usage
-view.setOnClickListener(new MyClickListener(this));
+// Any new Foo() { ... }: CRASH
+urlInput.addTextChangedListener(new TextWatcher() { ... });
+
+// Single-method anonymous class: also CRASH
+view.setOnClickListener(new View.OnClickListener() {
+    @Override public void onClick(View v) { ... }
+});
 ```
 
-### Lambdas are SAFE
-
-Lambdas compile to `invokedynamic` which does not trigger this bug:
+**GOOD — compiles:**
 ```java
+// Named top-level class
+public class BrowserWebViewClient extends WebViewClient {
+    private final MainActivity activity;
+    public BrowserWebViewClient(MainActivity a) { this.activity = a; }
+    @Override public void onPageFinished(WebView view, String url) {
+        activity.doSomething(url);
+    }
+}
+webView.setWebViewClient(new BrowserWebViewClient(this));
+
+// Lambda (single-method interfaces only — safe)
 view.setOnClickListener(v -> doSomething());
 ```
+
+### Safety table
+
+| Pattern | D8 safe? |
+|---|---|
+| `new Foo() { ... }` anonymous class | **NO** |
+| `class Bar extends Foo` inner (named) class | **NO** |
+| `public class Bar extends Foo` top-level class | **YES** |
+| `v -> expr` lambda | **YES** |
+| `this::method` method reference | **YES** |
 
 ## Naming Convention
 
