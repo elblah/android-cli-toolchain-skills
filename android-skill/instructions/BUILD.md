@@ -146,11 +146,13 @@ apksigner sign --ks "$KEYSTORE" --ks-pass pass:android \
   --out app.apk bin/unsigned.apk
 ```
 
-### 9. Install (copies to Downloads and opens)
+### 9. Install
 
 ```bash
-cp app.apk /storage/emulated/0/Download/myapp.apk
-termux-open /storage/emulated/0/Download/myapp.apk
+# On a connected device:
+adb install -r app.apk
+
+# Or copy the APK and install manually
 ```
 
 ## Build Script Targets

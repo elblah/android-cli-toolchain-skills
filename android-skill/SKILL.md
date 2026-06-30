@@ -3,7 +3,8 @@ name: android-cli-toolchain
 description: >
   Build native Java Android apps (API 21+) using AOSP CLI tools — no Gradle,
   no Android Studio. Supports hybrid WebView apps. Works on Termux, Debian/Ubuntu,
-  and any Linux with Java.
+  and any Linux with Java. Two build paths: plain javac (no deps) or Maven hybrid
+  (for projects needing Maven Central libraries).
 ---
 
 # Android CLI Toolchain
@@ -11,49 +12,56 @@ description: >
 ## Overview
 
 Build native Java Android apps (API 21+, target 30) using the AOSP command-line
-toolchain. No Gradle, no Android Studio. Each app is a directory under the
-monorepo at `projs/android/<appname>/` with its own `build.sh`.
+toolchain. No Gradle, no Android Studio. Each app is a directory with its own
+`build.sh`.
+
+Two build paths:
+
+| Path | When to use | Compiler | Dependencies |
+|------|-------------|----------|--------------|
+| **Plain** | Simple apps, no external Java deps | `javac --release 11` | Android SDK only (from local jar) |
+| **Maven hybrid** | Apps needing Maven Central libs | `mvn compile` (via `pom.xml`) | Pulled from Maven Central |
+
+Both paths share the same aapt2/d8/apksigner packaging pipeline. Pick the
+simpler one that fits.
 
 ## Stack
 
-- **Language**: Java 11 (`javac --release 11`)
+- **Language**: Java 11 (`javac --release 11` or `mvn compile` target 11)
 - **SDK**: `$HOME/android-sdk/platforms/android-30/android.jar`
 - **Toolchain**: aapt2, d8 (dex), apksigner, rsvg-convert (icons)
-- **Build**: `build.sh` scaffolded from skill templates
+- **Build**: `build.sh` + optionally `pom.xml`
 - **Keystore**: `$HOME/.android/debug.keystore` (auto-created)
 
 ## Quick Start
 
+### Plain path (no dependencies)
+
 ```bash
-# 1. Setup (one-time, platform-specific)
-#    Termux:     bash scripts/setup-termux.sh
-#    Debian:     bash scripts/setup-debian.sh
-
-# 2. Scaffold a project inside the monorepo
-bash scripts/scaffold.sh projs/android/myapp com.example.myapp
-
-# 3. Build and install
-cd projs/android/myapp
+bash scripts/scaffold.sh myapp com.example.myapp
+cd myapp
 bash build.sh install
 ```
+
+### Maven hybrid path (with dependencies)
+
+Scaffold a plain project, then add `pom.xml` and switch the build script
+to use `mvn compile` instead of `javac`. See the Maven section below.
 
 ## Directory Structure
 
 ```
-projs/android/
- appname/
-  AndroidManifest.xml
-  ic_launcher.svg
-  build.sh
-  src/com/example/appname/MainActivity.java
-  res/
-   values/   (strings.xml, colors.xml, themes.xml)
-   layout/   (activity_main.xml)
-   drawable/ (shape drawables)
-   menu/     (action bar menus)
-   mipmap-*/ (auto-generated PNG icons)
-
-.aicoder/autoload.md   — per-project persistent memory loaded on every session
+myapp/
+ AndroidManifest.xml
+ ic_launcher.svg
+ build.sh
+ src/com/example/appname/MainActivity.java
+ res/
+  values/   (strings.xml, colors.xml, themes.xml)
+  layout/   (activity_main.xml)
+  drawable/ (shape drawables)
+  menu/     (action bar menus)
+  mipmap-*/ (auto-generated PNG icons)
 ```
 
 ## Build Pipeline (build.sh)
@@ -68,6 +76,90 @@ projs/android/
 | 6. APK | `aapt2 link` | *.flat → bin/unsigned.apk |
 | 7. DEX in APK | `zip -q` | classes.dex → unsigned.apk |
 | 8. Sign | `apksigner sign` | unsigned.apk → app.apk |
+
+## Maven Hybrid Build
+
+Use when your app needs Java libraries from Maven Central. Maven handles
+compilation and dependency resolution; the aapt2/d8/apksigner pipeline
+still handles packaging.
+
+### Prerequisites
+
+```bash
+pkg install maven  # Termux
+apt install maven   # Debian
+```
+
+### Project structure (Maven standard layout)
+
+```
+appname/
+ pom.xml
+ build.sh (calls mvn compile instead of javac)
+ src/main/
+  AndroidManifest.xml
+  java/com/example/appname/ (Java sources + generated R.java)
+  res/... (standard Android resources)
+ ic_launcher.svg
+```
+
+### pom.xml
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>appname</artifactId>
+  <version>1.0</version>
+  <packaging>jar</packaging>
+  <properties>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
+  </properties>
+  <dependencies>
+    <dependency>
+      <groupId>android</groupId>
+      <artifactId>android</artifactId>
+      <version>30</version>
+      <scope>system</scope>
+      <systemPath>${user.home}/android-sdk/platforms/android-30/android.jar</systemPath>
+    </dependency>
+    <!-- Add Maven Central dependencies here -->
+  </dependencies>
+</project>
+```
+
+### Build pipeline difference
+
+In the build script, replace the Java compilation step:
+
+- **Plain path**: `javac --release 11 -d bin/classes -classpath ...`
+- **Maven path**: Copy generated R.java into `src/main/java/`, then `mvn -q compile`
+
+The rest of the pipeline (aapt2 compile, aapt2 link for R.java, d8, aapt2 link for APK,
+zip dex, sign) is identical.
+
+### build.sh (Maven version)
+
+```bash
+# After aapt2 link generates R.java into $GEN:
+cp -r "$GEN/"* "$JAVA_SRC/"
+
+# Then:
+mvn -q compile -f "$APP/pom.xml"
+
+# DEX uses target/classes instead of bin/classes:
+cd "$APP/target/classes" && jar cf "$BIN/input.jar" .
+cd "$APP"
+d8 --lib "$ANDROID_JAR" --output "$BIN/dex" "$BIN/input.jar"
+```
+
+### Adding dependencies
+
+To use a library from Maven Central, add it to `pom.xml` under `<dependencies>`.
+Maven automatically downloads transitives. No manual jar management needed.
 
 ## Critical Patterns
 
@@ -107,7 +199,8 @@ step because `$1` is consumed during iteration.
 bash scripts/setup-termux.sh
 ```
 Installs: aapt2, apksigner, d8, rsvg-convert, Java 21, Android SDK API 30.
-`zipalign` is optional (build.sh doesn't need it).
+`zipalign` is optional (build.sh doesn't need it). For Maven hybrid builds,
+also install Maven: `pkg install maven`.
 
 ### Debian / Ubuntu
 ```bash
@@ -120,13 +213,12 @@ unavailable. Downloads `d8.jar` from the Termux repo and the Android SDK
 platform JAR.
 
 ### Other Linux
-Install Java 17+ and get `d8.jar` from the Termux repo as shown in
-`setup-debian.sh`. The Android SDK JAR can be downloaded manually from
-Google's repo.
+Install Java 17+ and get `d8.jar` as shown in `setup-debian.sh`.
+The Android SDK JAR can be downloaded manually from Google's repo.
 
 ## D8 Inner-classes Restriction
 
-`d8` from the Termux repo **cannot merge inner classes across dex files**.
+`d8` **cannot merge inner classes across dex files**.
 Inner classes (e.g., `MyActivity$1.class`, `MyActivity$MyInner.class`) must
 be in the same dex file as their outer class. Since our pipeline produces a
 single `classes.dex`, this is satisfied. Avoid multi-dex setups.
