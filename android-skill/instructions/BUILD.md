@@ -4,7 +4,7 @@
 
 All tools are installed via platform-specific setup:
 
-- **Termux**: `pkg install d8 aapt apksigner zipalign librsvg openjdk-21`
+- **Termux**: `bash scripts/setup-termux.sh` (one-time)
 - **Debian/Linux**: `bash scripts/setup-debian.sh` (one-time)
 
 Tools:
@@ -22,6 +22,10 @@ Tools:
 ```
 $HOME/android-sdk/platforms/android-30/android.jar
 ```
+
+Setup scripts download the Android API 30 platform JAR automatically.
+If doing it manually: download `platform-30_r03.zip` from Google's
+Android repository and extract `android.jar` to the path above.
 
 ## Summary
 

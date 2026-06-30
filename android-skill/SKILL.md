@@ -30,11 +30,13 @@ Install the toolchain for your environment:
 
 ### Termux (Android)
 ```
-pkg install d8 aapt apksigner zipalign librsvg openjdk-21
+bash scripts/setup-termux.sh
 ```
+One-time setup. Installs all packages (aapt2, apksigner, zipalign, rsvg-convert,
+Java 21, d8) and downloads the Android API 30 platform JAR.
 
 ### Debian / Ubuntu (Linux)
-```bash
+```
 bash scripts/setup-debian.sh
 ```
 One-time setup. Installs all packages (aapt2, apksigner, zipalign, rsvg-convert,
@@ -50,7 +52,7 @@ or try `scripts/setup-debian.sh` if on a Debian-based system.
 This skill contains:
 - `templates/`      — File templates for scaffolding a new project
 - `instructions/`   — Detailed guides (architecture, build, java, resources)
-- `scripts/`        — Helper scripts (scaffold, setup-debian.sh)
+- `scripts/`        — Helper scripts (scaffold, setup-debian.sh, setup-termux.sh)
 
 ## How to Use
 

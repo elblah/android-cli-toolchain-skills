@@ -43,13 +43,13 @@ cp "$TEMPLATES/res/values/themes.xml" "$DEST/res/values/"
 # Replace placeholders in manifest
 sed -i "s|package=\"com.myapp\"|package=\"$PACKAGE\"|g" "$DEST/AndroidManifest.xml"
 sed -i "s|\.MainActivity|.$MAIN_CLASS|g" "$DEST/AndroidManifest.xml"
-sed -i "s|res/values/themes.xml|res/values/themes.xml|g" "$DEST/build.sh"
-sed -i "s|com/myapp/R.java|$PACKAGE_PATH/R.java|g" "$DEST/build.sh"
+
+# Replace PACKAGE variable in build.sh
+sed -i "s|PACKAGE=\"com/myapp\"|PACKAGE=\"$PACKAGE_PATH\"|g" "$DEST/build.sh"
 sed -i "s|src/com/myapp/MainActivity.java|src/$PACKAGE_PATH/${MAIN_CLASS}.java|g" "$DEST/build.sh"
-sed -i "s|myapp.apk|${APP_NAME,,}.apk|g" "$DEST/build.sh"
 
 # Create basic layout
-cat > "$DEST/res/layout/activity_main.xml" << EOFXML
+cat > "$DEST/res/layout/activity_main.xml" << 'EOFXML'
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"

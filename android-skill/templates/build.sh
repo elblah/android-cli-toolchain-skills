@@ -5,6 +5,7 @@ APP="$(cd "$(dirname "$0")" && pwd)"
 BIN="$APP/bin"
 GEN="$APP/gen"
 ANDROID_JAR="$HOME/android-sdk/platforms/android-30/android.jar"
+PACKAGE="com/myapp"
 
 if [ "${1:-}" = "clean" ]; then
   rm -rf "$BIN" "$GEN" "$APP/app.apk"
@@ -20,12 +21,8 @@ ICON_DIRS="mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi"
 ICON_SIZES="48 72 96 144 192"
 for d in $ICON_DIRS; do mkdir -p "$APP/res/$d"; done
 if ! command -v rsvg-convert &>/dev/null; then
-  if command -v pkg &>/dev/null; then
-    pkg install -y librsvg 2>&1 | tail -1
-  else
-    echo "rsvg-convert not found. Run scripts/setup-debian.sh first." >&2
-    exit 1
-  fi
+  echo "rsvg-convert not found. Run 'bash scripts/setup-termux.sh' or install librsvg." >&2
+  exit 1
 fi
 set -- $ICON_SIZES
 for d in $ICON_DIRS; do
@@ -54,8 +51,8 @@ aapt2 link -o /dev/null \
 
 echo "== Compiling Java..."
 javac --release 11 -J-Xmx256m -d "$BIN/classes" -classpath "$ANDROID_JAR" \
-  "$GEN/com/myapp/R.java" \
-  "$APP/src/com/myapp/MainActivity.java"
+  "$GEN/$PACKAGE/R.java" \
+  "$APP/src/$PACKAGE/MainActivity.java"
 # Add explicit javac lines for each Java source file
 
 echo "== Converting to DEX..."
