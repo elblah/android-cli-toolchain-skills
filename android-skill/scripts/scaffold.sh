@@ -13,7 +13,7 @@ if [ -z "$DEST" ] || [ -z "$PACKAGE" ]; then
   exit 1
 fi
 
-SKILL_DIR="$(cd "$(dirname "$0")" && pwd)"
+SKILL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 TEMPLATES="$SKILL_DIR/templates"
 
 # Extract app name from package
@@ -44,9 +44,12 @@ cp "$TEMPLATES/res/values/themes.xml" "$DEST/res/values/"
 sed -i "s|package=\"com.myapp\"|package=\"$PACKAGE\"|g" "$DEST/AndroidManifest.xml"
 sed -i "s|\.MainActivity|.$MAIN_CLASS|g" "$DEST/AndroidManifest.xml"
 
-# Replace PACKAGE variable in build.sh
+# Replace PACKAGE variable in build.sh (MainActivity first, before PACKAGE change)
+sed -i "s|MainActivity.java|${MAIN_CLASS}.java|g" "$DEST/build.sh"
 sed -i "s|PACKAGE=\"com/myapp\"|PACKAGE=\"$PACKAGE_PATH\"|g" "$DEST/build.sh"
-sed -i "s|src/com/myapp/MainActivity.java|src/$PACKAGE_PATH/${MAIN_CLASS}.java|g" "$DEST/build.sh"
+
+# Add aapt2 compile line for the layout (insert before the comment)
+sed -i '/^# Add explicit aapt2 compile lines for each layout/i\aapt2 compile -o "$BIN/compiled" "$APP/res/layout/activity_main.xml"' "$DEST/build.sh"
 
 # Create basic layout
 cat > "$DEST/res/layout/activity_main.xml" << 'EOFXML'

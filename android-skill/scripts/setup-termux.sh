@@ -37,13 +37,17 @@ fi
 
 echo ""
 echo "== Verification == "
-for cmd in aapt2 d8 apksigner zipalign rsvg-convert java; do
+for cmd in aapt2 d8 apksigner rsvg-convert java; do
   if command -v "$cmd" > /dev/null 2>&1; then
     echo "   OK  $cmd"
   else
     echo "   MISSING  $cmd"
   fi
 done
+# zipalign is optional (not used by build.sh)
+if command -v zipalign > /dev/null 2>&1; then
+  echo "   OK  zipalign"
+fi
 if [ -f "$ANDROID_JAR" ]; then
   echo "   OK  android.jar ($ANDROID_JAR)"
 else

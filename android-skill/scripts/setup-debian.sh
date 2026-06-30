@@ -5,21 +5,47 @@ set -e
 # This installs all tools needed by build.sh
 
 echo "== Checking system packages..."
-PKGS=""
-# Map binary -> package
-check_bin() {
-  command -v "$1" >/dev/null 2>&1 || echo "$2"
-}
-PKGS="$PKGS $(check_bin aapt2 aapt)"
-PKGS="$PKGS $(check_bin apksigner apksigner)"
-PKGS="$PKGS $(check_bin zipalign android-sdk-build-tools)"
-PKGS="$PKGS $(check_bin rsvg-convert librsvg2-bin)"
-PKGS="$PKGS $(check_bin java openjdk-21-jdk-headless)"
-PKGS="$PKGS $(check_bin wget wget)"
-PKGS="$PKGS $(check_bin unzip unzip)"
-PKGS="$PKGS $(check_bin zip zip)"
-PKGS="$(echo "$PKGS" | xargs)"  # trim whitespace
 
+# Check if a binary exists, and find an apt package that provides it
+# Usage: find_pkg <binary> <pkg1> [pkg2 ...]
+# Returns first available package name, or empty string if none found
+find_pkg() {
+  local bin="$1"
+  shift
+  if command -v "$bin" >/dev/null 2>&1; then
+    return 0
+  fi
+  for pkg in "$@"; do
+    if apt show "$pkg" >/dev/null 2>&1; then
+      echo "$pkg"
+      return 0
+    fi
+  done
+  return 1
+}
+
+PKGS=""
+try_add_pkg() {
+  local pkg
+  pkg="$(find_pkg "$@")"
+  if [ -n "$pkg" ]; then
+    PKGS="$PKGS $pkg"
+  else
+    echo "   WARNING: could not find apt package for '$1' — manual install needed" >&2
+  fi
+}
+
+try_add_pkg aapt2 aapt2 android-sdk-build-tools
+try_add_pkg apksigner apksigner
+try_add_pkg rsvg-convert librsvg2-bin
+# zipalign is optional (build.sh doesn't use it directly)
+try_add_pkg zipalign zipalign android-sdk-build-tools
+try_add_pkg java default-jdk-headless openjdk-21-jdk-headless openjdk-17-jdk-headless
+try_add_pkg wget wget
+try_add_pkg unzip unzip
+try_add_pkg zip zip
+
+PKGS="$(echo "$PKGS" | xargs)"
 if [ -n "$PKGS" ]; then
   echo "   Installing:$PKGS"
   sudo apt update -qq
@@ -96,13 +122,17 @@ fi
 
 echo ""
 echo "== Verification == "
-for cmd in aapt2 d8 apksigner zipalign rsvg-convert java; do
+for cmd in aapt2 d8 apksigner rsvg-convert java; do
   if command -v "$cmd" > /dev/null 2>&1; then
     echo "   OK  $cmd"
   else
     echo "   MISSING  $cmd"
   fi
 done
+# zipalign is optional (not used by build.sh)
+if command -v zipalign > /dev/null 2>&1; then
+  echo "   OK  zipalign"
+fi
 if [ -f "$ANDROID_JAR" ]; then
   echo "   OK  android.jar ($ANDROID_JAR)"
 else

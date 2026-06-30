@@ -24,17 +24,21 @@ if ! command -v rsvg-convert &>/dev/null; then
   echo "rsvg-convert not found. Run 'bash scripts/setup-termux.sh' or install librsvg." >&2
   exit 1
 fi
+save_first="${1:-}"
 set -- $ICON_SIZES
 for d in $ICON_DIRS; do
   rsvg-convert -w "$1" -h "$1" "$APP/ic_launcher.svg" -o "$APP/res/$d/ic_launcher.png"
   shift
 done
+set -- "$save_first"
 
 echo "== Compiling resources..."
 aapt2 compile -o "$BIN/compiled" "$APP/res/values/strings.xml"
+shopt -s nullglob
 for f in "$APP"/res/values-*/strings.xml; do
   aapt2 compile -o "$BIN/compiled" "$f"
 done
+shopt -u nullglob
 aapt2 compile -o "$BIN/compiled" "$APP/res/values/colors.xml"
 aapt2 compile -o "$BIN/compiled" "$APP/res/values/themes.xml"
 for d in $ICON_DIRS; do
