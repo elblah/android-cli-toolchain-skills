@@ -15,15 +15,17 @@ Build native Java Android apps (API 21+, target 34) using the AOSP command-line
 toolchain. No Gradle, no Android Studio. Each app is a directory with its own
 `build.sh`.
 
-Two build paths:
+Three build paths:
 
 | Path | When to use | Compiler | Dependencies |
 |------|-------------|----------|--------------|
 | **Plain** | Simple apps, no external Java deps | `javac --release 11` | Android SDK only (from local jar) |
 | **Maven hybrid** | Apps needing Maven Central libs | `mvn compile` (via `pom.xml`) | Pulled from Maven Central |
+| **Gradle** | Play Store AAB / full AGP pipeline | AGP 8.x | Managed by Gradle |
 
-Both paths share the same aapt2/d8/apksigner packaging pipeline. Pick the
-simpler one that fits.
+The plain and Maven paths share the same aapt2/d8/apksigner packaging pipeline.
+Gradle (`build-gradle.sh`) is a separate, heavier path for publishing —
+see `instructions/GRADLE.md`.
 
 ## Stack
 
@@ -191,6 +193,20 @@ step because `$1` is consumed during iteration.
 - `build.sh` must have an explicit `javac` line for every `.java` file.
 - The scaffold script automatically adds the compile line for
   `activity_main.xml`.
+
+### android:exported required for Activities with intent filters
+Activities with `<intent-filter>` MUST have `android:exported` set explicitly
+when `targetSdk >= 31` (Android 12+). Required by AGP manifest merger;
+CLI `aapt2 link` does not enforce it but it's good practice.
+
+```xml
+<activity android:name=".MainActivity" android:exported="true">
+    <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+    </intent-filter>
+</activity>
+```
 
 ## Setup
 
