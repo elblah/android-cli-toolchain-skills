@@ -32,15 +32,15 @@ Not the default — the fast CLI path (`build.sh`) is preferred for development.
 Gradle + SDK are large and live outside the project on external storage.
 
 ```bash
-# Default (maps to /mnt/shared in sandbox, or ~/storage on device)
-EXT_DIR=/mnt/shared bash build-gradle.sh
+# Default: set EXT_DIR to a path with 16GB+ free space
+EXT_DIR=/path/to/storage bash build-gradle.sh
 
-# Or set once:
-export EXT_DIR=/mnt/shared
+# Or set once in the environment:
+export EXT_DIR=/path/to/storage
 bash build-gradle.sh
 ```
 
-On the TV box or phone, set `EXT_DIR` to a volume with enough space:
+On device (phone/TV box), use a writable volume:
 
 ```bash
 export EXT_DIR=/storage/emulated/0  # phone internal storage
@@ -59,9 +59,10 @@ keystore via `jarsigner` (see `instructions/AAB.md` for release signing).
 
 ## Java Setup
 
-Java 21 at `/usr/lib/jvm/java-21-openjdk-arm64` needs `LD_LIBRARY_PATH` set.
+Java 21 is required. On Debian/ARM64 the JDK is at `/usr/lib/jvm/java-21-openjdk-arm64` and needs `LD_LIBRARY_PATH` set:
 
 ```bash
+# Adjust path to match your JDK location
 export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-arm64
 export PATH=$JAVA_HOME/bin:$PATH
 export LD_LIBRARY_PATH=$JAVA_HOME/lib:$LD_LIBRARY_PATH
