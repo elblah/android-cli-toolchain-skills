@@ -125,13 +125,13 @@ AAPT2 aapt2-8.2.2-10154469-linux Daemon #0: Unexpected error output:
 x86_64-binfmt-P: Could not open '/lib64/ld-linux-x86-64.so.2'
 ```
 
-**Fix**: Override with system aarch64 `aapt2` in `gradle.properties`:
+**Fix**: Override with system aarch64 `aapt2` in `gradle.properties` (auto-created by `build-gradle.sh`):
 
 ```properties
 android.aapt2FromMavenOverride=/usr/lib/android-sdk/build-tools/debian/aapt2
 ```
 
-This binary comes from Debian's `google-android-build-tools-installer`.
+This binary comes from Debian's `google-android-build-tools-installer` package. The script writes `gradle.properties` if it doesn't exist. If your aapt2 is at a different path, edit the `AAPT2_OVERRIDE` variable in `build-gradle.sh`.
 
 ## Project Setup
 
@@ -211,6 +211,15 @@ export GRADLE_USER_HOME="$EXT_DIR/.gradle"
 export ANDROID_HOME="$EXT_DIR/android-sdk"
 ```
 
+**gradle.properties** (auto-created with aapt2 override):
+```bash
+AAPT2_OVERRIDE="/usr/lib/android-sdk/build-tools/debian/aapt2"
+cat > "$APP/gradle.properties" << EOF
+android.aapt2FromMavenOverride=$AAPT2_OVERRIDE
+org.gradle.jvmargs=-Xmx512m
+EOF
+```
+
 **Manifest fix** (strip `package` for AGP8):
 ```bash
 if grep -q 'package=' "$MANIFEST"; then
@@ -225,5 +234,5 @@ trap cleanup EXIT  # restore after build
 1. Copy `build.gradle` and `settings.gradle` to the app dir
 2. Copy `build-gradle.sh` to the app dir
 3. Set `namespace` in `build.gradle` to match your app's package
-4. Run `bash build-gradle.sh` to test
+4. Run `bash build-gradle.sh` — it auto-creates `local.properties` and `gradle.properties`
 5. For AAB: `bash build-gradle.sh aab`
