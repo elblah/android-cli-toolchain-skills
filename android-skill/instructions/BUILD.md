@@ -20,11 +20,11 @@ Tools:
 ## SDK Location
 
 ```
-$HOME/android-sdk/platforms/android-30/android.jar
+$HOME/android-sdk/platforms/android-34/android.jar
 ```
 
-Setup scripts download the Android API 30 platform JAR automatically.
-If doing it manually: download `platform-30_r03.zip` from Google's
+Setup scripts download the Android API 34 platform JAR automatically.
+If doing it manually: download `platform-34-ext7_r03.zip` from Google's
 Android repository and extract `android.jar` to the path above.
 
 ## Summary
@@ -78,7 +78,7 @@ done
 
 ```bash
 aapt2 link -o /dev/null \
-  -I $HOME/android-sdk/platforms/android-30/android.jar \
+  -I $HOME/android-sdk/platforms/android-34/android.jar \
   --manifest AndroidManifest.xml \
   --java gen/ \
   bin/compiled/*.flat
@@ -92,7 +92,7 @@ All Java source files and R.java must be listed explicitly:
 
 ```bash
 javac --release 11 -J-Xmx256m -d bin/classes \
-  -classpath $HOME/android-sdk/platforms/android-30/android.jar \
+  -classpath $HOME/android-sdk/platforms/android-34/android.jar \
   gen/com/myapp/R.java \
   src/com/myapp/*.java
 ```
@@ -102,7 +102,7 @@ javac --release 11 -J-Xmx256m -d bin/classes \
 ```bash
 cd bin/classes && jar cf bin/input.jar .
 cd $APP
-d8 --lib $HOME/android-sdk/platforms/android-30/android.jar \
+d8 --lib $HOME/android-sdk/platforms/android-34/android.jar \
   --output bin/dex bin/input.jar
 ```
 

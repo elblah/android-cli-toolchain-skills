@@ -4,7 +4,17 @@ set -e
 APP="$(cd "$(dirname "$0")" && pwd)"
 BIN="$APP/bin"
 GEN="$APP/gen"
-ANDROID_JAR="$HOME/android-sdk/platforms/android-30/android.jar"
+ANDROID_API=34
+ANDROID_JAR="$HOME/android-sdk/platforms/android-$ANDROID_API/android.jar"
+
+if [ ! -f "$ANDROID_JAR" ]; then
+  mkdir -p "$(dirname "$ANDROID_JAR")"
+  echo "== Downloading android-$ANDROID_API platform (one-time)..."
+  wget -q https://dl.google.com/android/repository/platform-34-ext7_r03.zip -O /tmp/android-sdk.zip
+  unzip -q /tmp/android-sdk.zip android-34/android.jar -d /tmp/android-sdk-out
+  cp /tmp/android-sdk-out/android-34/android.jar "$ANDROID_JAR"
+  rm -rf /tmp/android-sdk.zip /tmp/android-sdk-out
+fi
 PACKAGE="com/myapp"
 
 if [ "${1:-}" = "clean" ]; then

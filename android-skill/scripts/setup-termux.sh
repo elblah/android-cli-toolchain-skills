@@ -7,17 +7,17 @@ set -e
 echo "== Installing packages..."
 pkg install -y d8 aapt aapt2 apksigner librsvg openjdk-21 2>&1 | tail -3
 
-echo "== Setting up Android SDK platform (API 30)..."
+echo "== Setting up Android SDK platform (API 34)..."
 ANDROID_SDK="$HOME/android-sdk"
-ANDROID_JAR="$ANDROID_SDK/platforms/android-30/android.jar"
+ANDROID_JAR="$ANDROID_SDK/platforms/android-34/android.jar"
 
 if [ ! -f "$ANDROID_JAR" ]; then
-  mkdir -p "$ANDROID_SDK/platforms/android-30"
-  echo "   Downloading android-30 platform..."
-  wget -q https://dl.google.com/android/repository/platform-30_r03.zip -O /tmp/platform-30.zip
-  unzip -q /tmp/platform-30.zip -d /tmp/platform-30
-  cp /tmp/platform-30/*/android.jar "$ANDROID_JAR"
-  rm -rf /tmp/platform-30.zip /tmp/platform-30
+  mkdir -p "$ANDROID_SDK/platforms/android-34"
+  echo "   Downloading android-34 platform..."
+  wget -q https://dl.google.com/android/repository/platform-34-ext7_r03.zip -O /tmp/platform-34.zip
+  unzip -q /tmp/platform-34.zip android-34/android.jar -d /tmp/platform-34
+  cp /tmp/platform-34/android-34/android.jar "$ANDROID_JAR"
+  rm -rf /tmp/platform-34.zip /tmp/platform-34
   echo "   android.jar installed"
 else
   echo "   android.jar already present"

@@ -11,7 +11,7 @@ description: >
 
 ## Overview
 
-Build native Java Android apps (API 21+, target 30) using the AOSP command-line
+Build native Java Android apps (API 21+, target 34) using the AOSP command-line
 toolchain. No Gradle, no Android Studio. Each app is a directory with its own
 `build.sh`.
 
@@ -28,7 +28,7 @@ simpler one that fits.
 ## Stack
 
 - **Language**: Java 11 (`javac --release 11` or `mvn compile` target 11)
-- **SDK**: `$HOME/android-sdk/platforms/android-30/android.jar`
+- **SDK**: `$HOME/android-sdk/platforms/android-34/android.jar`
 - **Toolchain**: aapt2, d8 (dex), apksigner, rsvg-convert (icons)
 - **Build**: `build.sh` + optionally `pom.xml`
 - **Keystore**: `$HOME/.android/debug.keystore` (auto-created)
@@ -122,9 +122,9 @@ appname/
     <dependency>
       <groupId>android</groupId>
       <artifactId>android</artifactId>
-      <version>30</version>
+      <version>34</version>
       <scope>system</scope>
-      <systemPath>${user.home}/android-sdk/platforms/android-30/android.jar</systemPath>
+      <systemPath>${user.home}/android-sdk/platforms/android-34/android.jar</systemPath>
     </dependency>
     <!-- Add Maven Central dependencies here -->
   </dependencies>

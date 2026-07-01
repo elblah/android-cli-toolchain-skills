@@ -39,7 +39,7 @@ myapp/
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.myapp">
 
-    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="30" />
+    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34" />
 
     <application
         android:label="@string/app_name"
