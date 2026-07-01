@@ -31,8 +31,10 @@ Not the default — the fast CLI path (`build.sh`) is preferred for development.
 
 Gradle + SDK are large and live outside the project on external storage.
 
+In the default bwrap sandbox, `/mnt/shared` is available and the script defaults to it.
+When running outside sandbox (`SANDBOX=0`), set `EXT_DIR` to a writable path:
+
 ```bash
-# Default: set EXT_DIR to a path with 16GB+ free space
 EXT_DIR=/path/to/storage bash build-gradle.sh
 
 # Or set once in the environment:
@@ -46,6 +48,26 @@ On device (phone/TV box), use a writable volume:
 export EXT_DIR=/storage/emulated/0  # phone internal storage
 bash build-gradle.sh
 ```
+
+## Platform Notes
+
+What changes per environment:
+
+| Environment | Java | aapt2 | EXT_DIR default |
+|------------|------|-------|-----------------|
+| RPi3 (bwrap sandbox) | `/usr/lib/jvm/java-21-openjdk-arm64` | Debian pkg → `/usr/lib/android-sdk/build-tools/debian/aapt2` | `/mnt/shared` |
+| TV box (Termux) | `$PREFIX/lib/jvm/java-21-openjdk/` | Need ARM64 binary — download from Google's Maven manually or use AGP fallback (see aapt2 quirk) | `/storage/emulated/0` |
+| Phone (Termux) | Same as TV box | Same as TV box | `/storage/emulated/0` |
+
+On Termux (TV box / phone), the script's defaults won't match. Set env vars before running:
+
+```bash
+export JAVA_HOME=$PREFIX/lib/jvm/java-21-openjdk
+export EXT_DIR=/storage/emulated/0
+# aapt2: download ARM64 binary and set AAPT2_OVERRIDE in gradle.properties
+```
+
+See the aapt2 quirk section below for ARM64 workaround across all platforms.
 
 ### Build Outputs
 
@@ -126,13 +148,17 @@ AAPT2 aapt2-8.2.2-10154469-linux Daemon #0: Unexpected error output:
 x86_64-binfmt-P: Could not open '/lib64/ld-linux-x86-64.so.2'
 ```
 
-**Fix**: Override with system aarch64 `aapt2` in `gradle.properties` (auto-created by `build-gradle.sh`):
+**Fix**: Override with a native ARM64 `aapt2` in `gradle.properties`:
 
 ```properties
-android.aapt2FromMavenOverride=/usr/lib/android-sdk/build-tools/debian/aapt2
+android.aapt2FromMavenOverride=/path/to/aarch64/aapt2
 ```
 
-This binary comes from Debian's `google-android-build-tools-installer` package. The script writes `gradle.properties` if it doesn't exist. If your aapt2 is at a different path, edit the `AAPT2_OVERRIDE` variable in `build-gradle.sh`.
+On Debian/RPi3: comes from `google-android-build-tools-installer` package at `/usr/lib/android-sdk/build-tools/debian/aapt2`.
+
+On Termux (TV box / phone): download the ARM64 `aapt2` from Google's Maven or build from source. Place it somewhere and point `AAPT2_OVERRIDE` at it.
+
+The script auto-creates `gradle.properties` with a default path. Edit `AAPT2_OVERRIDE` in `build-gradle.sh` or override in environment.
 
 ## Project Setup
 
